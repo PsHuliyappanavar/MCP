@@ -1,0 +1,41 @@
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MCP configuration with secrets (DO NOT PUSH)
+mcp.json
+
+# OAuth tokens and session data
+.oauth_tokens/
+*.token
+session_*.json
+
+# Environment variables
+.env
+.env.local
+
+# Checkpoints and temporary files
+checkpoints/
+*.checkpoint
+temp/
