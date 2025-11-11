@@ -10,13 +10,24 @@ This repository contains **Agent486**, a custom GitHub Copilot agent that automa
 2. **Azure DevOps** and/or **Jira** account with appropriate permissions
 3. **OAuth 2.0 credentials** for ADO and/or Jira
 
+### Agent Configuration Options
+
+This repository provides **TWO** agent configurations:
+
+1. **Repository-Level Agent** (`.github/agents/agent486.md`)
+   - For individual repository use
+   - Requires MCP servers configured separately in VS Code settings
+   - Use for testing or single-repository deployments
+
+2. **Organization/Enterprise-Level Agent** (`agents/agent486.md`) ✅ **RECOMMENDED**
+   - For organization-wide or enterprise-wide use
+   - MCP servers embedded in YAML frontmatter with secret references
+   - Available across all repositories in your organization
+   - Requires GitHub Copilot Business or Enterprise subscription
+
 ### Setup Instructions
 
-#### Step 1: Configure MCP Servers in Repository Settings
-
-Since this is a repository-level custom agent, MCP servers must be configured in your GitHub repository settings.
-
-⚠️ **Important**: Repository-level agents cannot embed MCP server configuration in the agent profile. You must configure MCP servers separately in repository settings OR use GitHub Codespaces/local VS Code with the MCP servers running locally.
+⚠️ **For Organization/Enterprise Users**: Use the agent in `agents/agent486.md` (already configured with MCP servers)
 
 **Option A: For Local VS Code Usage**
 
