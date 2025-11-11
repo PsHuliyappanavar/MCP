@@ -5,9 +5,9 @@ tools: ["read", "search", "edit", "ado-mcp-server/*", "jira-mcp-server/*"]
 mcp-servers:
   ado-mcp-server:
     type: local
-    command: python
+    command: python3
     args:
-      - "C:\\Users\\sandeepk\\Favorites\\Building\\deployMCP\\ado_mcp_stdio.py"
+      - "ado_mcp_stdio.py"
     tools: ["*"]
     env:
       ADO_CLIENT_ID: ${{ secrets.ADO_CLIENT_ID }}
@@ -15,9 +15,9 @@ mcp-servers:
       ADO_TENANT_ID: ${{ secrets.ADO_TENANT_ID }}
   jira-mcp-server:
     type: local
-    command: python
+    command: python3
     args:
-      - "C:\\Users\\sandeepk\\Favorites\\Building\\deployMCP\\jira_mcp_stdio.py"
+      - "jira_mcp_stdio.py"
     tools: ["*"]
     env:
       ATLASSIAN_CLIENT_ID: ${{ secrets.ATLASSIAN_CLIENT_ID }}

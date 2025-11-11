@@ -1,221 +1,266 @@
-# Organization/Enterprise Agent Configuration - Quick Guide
+# Agent486 Setup Guide - Organization/Enterprise Level
 
-## ✅ What Was Done
+## Overview
+Agent486 is a GitHub Copilot custom agent that automates BRD (Business Requirements Document) parsing and hierarchical work item creation in Azure DevOps and Jira using MCP (Model Context Protocol) servers.
 
-Based on the GitHub documentation for organization and enterprise-level custom agents, I've created the correct configuration:
+## Architecture
 
-### 1. **Created Organization-Level Agent Profile**
+### Components
+1. **Custom Agent**: `agents/agent486.md` - Organization-level agent profile
+2. **MCP Servers**: 
+   - `ado_mcp_stdio.py` - Azure DevOps MCP server
+   - `jira_mcp_stdio.py` - Jira MCP server
+3. **Setup Workflow**: `.github/workflows/copilot-setup-steps.yml` - Installs dependencies
+4. **Secrets**: OAuth credentials stored in GitHub repository's Copilot environment
 
-- **Location**: `agents/agent486.md` (root level, NOT `.github/agents/`)
-- **Key Feature**: MCP servers embedded directly in YAML frontmatter
-- **Benefit**: Available across ALL repositories in your organization
+### Why VS Code Chat Modes Don't Work
+- ❌ **VS Code `.chatmode.md` files**: Context/personality only, NO MCP support
+- ✅ **Organization agents (`agents/*.md`)**: Full MCP support with embedded server configs
+- ❌ **Repository agents (`.github/agents/*.md`)**: NO MCP server configuration support
 
-### 2. **Embedded MCP Server Configuration**
+## Prerequisites
 
-The YAML frontmatter now includes:
+### 1. GitHub Enterprise Cloud
+- Organization must have **GitHub Copilot Enterprise**
+- Custom agents feature must be enabled (contact GitHub admin if not available)
+
+### 2. Repository Access
+- Repository must be in the organization
+- You must be a **repository administrator** to configure secrets
+
+### 3. OAuth Applications
+
+#### Azure DevOps (ADO)
+- Azure AD application with:
+  - Client ID: `25a1e0db-fb5f-4baf-b542-af6de0ebe24f`
+  - Client Secret: `Xjz8Q~A3VbHe-yugbKhi-LVpRHwUzQ8owEWVBbt0`
+  - Tenant ID: `0c88fa98-b222-4fd8-9414-559fa424ce64`
+  - Redirect URI: `http://localhost:9001/oauth/callback`
+  - Scopes: `https://app.vssps.visualstudio.com/user_impersonation offline_access`
+
+#### Jira/Atlassian
+- Atlassian OAuth 2.0 app with:
+  - Client ID: `rTGWKW1Ogs2BFloYan82z9Pqg8IUIzQK`
+  - Client Secret: `ATOAO6nNJmT8-b2nQbh3eq-MiHdVlY7PDZipki9vHgKfTINYwVhoEz64YNIbmUAQ9lR_503D4DB8`
+  - Callback URL: `http://localhost:9001/callback`
+  - Scopes: `read:jira-work write:jira-work offline_access`
+
+## Setup Instructions
+
+### Step 1: Push Code to GitHub
+
+The repository is already pushed to: `https://github.com/PsHuliyappanavar/MCP`
+
+Verify files exist:
+```bash
+git ls-files
+```
+
+Expected files:
+- `agents/agent486.md` ✅
+- `.github/workflows/copilot-setup-steps.yml` ✅
+- `ado_mcp_stdio.py` ✅
+- `jira_mcp_stdio.py` ✅
+
+### Step 2: Create Copilot Environment and Secrets
+
+1. Go to repository on GitHub.com:
+   ```
+   https://github.com/PsHuliyappanavar/MCP
+   ```
+
+2. Click **Settings** tab
+
+3. In left sidebar, click **Environments**
+
+4. Click **New environment**
+
+5. Name it exactly: `copilot`
+
+6. Click **Configure environment**
+
+7. Add the following secrets (click "Add environment secret" for each):
+
+   | Secret Name | Value |
+   |------------|-------|
+   | `COPILOT_MCP_ADO_CLIENT_ID` | `25a1e0db-fb5f-4baf-b542-af6de0ebe24f` |
+   | `COPILOT_MCP_ADO_CLIENT_SECRET` | `Xjz8Q~A3VbHe-yugbKhi-LVpRHwUzQ8owEWVBbt0` |
+   | `COPILOT_MCP_ADO_TENANT_ID` | `0c88fa98-b222-4fd8-9414-559fa424ce64` |
+   | `COPILOT_MCP_ATLASSIAN_CLIENT_ID` | `rTGWKW1Ogs2BFloYan82z9Pqg8IUIzQK` |
+   | `COPILOT_MCP_ATLASSIAN_CLIENT_SECRET` | `ATOAO6nNJmT8-b2nQbh3eq-MiHdVlY7PDZipki9vHgKfTINYwVhoEz64YNIbmUAQ9lR_503D4DB8` |
+
+   **Important**: All secret names MUST start with `COPILOT_MCP_` prefix!
+
+### Step 3: Update Agent Configuration
+
+The `agents/agent486.md` file references secrets using the `${{ secrets.* }}` syntax:
 
 ```yaml
----
-name: agent486
-description: Automates BRD parsing and hierarchical work-item creation in Azure DevOps and Jira
-tools: ["read", "search", "edit", "ado-mcp-server/*", "jira-mcp-server/*"]
 mcp-servers:
   ado-mcp-server:
-    type: local
-    command: python
-    args:
-      - "C:\\Users\\sandeepk\\Favorites\\Building\\deployMCP\\ado_mcp_stdio.py"
-    tools: ["*"]
     env:
       ADO_CLIENT_ID: ${{ secrets.ADO_CLIENT_ID }}
       ADO_CLIENT_SECRET: ${{ secrets.ADO_CLIENT_SECRET }}
       ADO_TENANT_ID: ${{ secrets.ADO_TENANT_ID }}
-  jira-mcp-server:
-    type: local
-    command: python
-    args:
-      - "C:\\Users\\sandeepk\\Favorites\\Building\\deployMCP\\jira_mcp_stdio.py"
-    tools: ["*"]
-    env:
-      ATLASSIAN_CLIENT_ID: ${{ secrets.ATLASSIAN_CLIENT_ID }}
-      ATLASSIAN_CLIENT_SECRET: ${{ secrets.ATLASSIAN_CLIENT_SECRET }}
----
 ```
 
-## 🔑 Key Differences: Repository vs Organization Level
+**BUT** the actual secret names in the Copilot environment have the `COPILOT_MCP_` prefix.
 
-| Aspect           | Repository-Level               | Organization/Enterprise-Level |
-| ---------------- | ------------------------------ | ----------------------------- |
-| **Location**     | `.github/agents/`              | `agents/` (root)              |
-| **MCP Config**   | Separate (in VS Code settings) | Embedded in YAML frontmatter  |
-| **Secrets**      | Local environment variables    | `${{ secrets.NAME }}` syntax  |
-| **Scope**        | Single repository              | All repos in org/enterprise   |
-| **Subscription** | Any Copilot plan               | Business or Enterprise only   |
+GitHub automatically maps:
+- `${{ secrets.ADO_CLIENT_ID }}` → `COPILOT_MCP_ADO_CLIENT_ID`
+- `${{ secrets.ADO_CLIENT_SECRET }}` → `COPILOT_MCP_ADO_CLIENT_SECRET`
+- etc.
 
-## 📁 Repository Structure
+**No changes needed** - the mapping happens automatically!
 
-```
-MCP/
-├── .github/
-│   └── agents/
-│       └── agent486.md          # Repository-level (for reference)
-├── agents/
-│   └── agent486.md              # ✅ Organization-level (ACTIVE)
-├── ado_mcp_stdio.py
-├── jira_mcp_stdio.py
-├── Instructions.md
-├── DEPLOYMENT.md
-└── README.md
-```
+### Step 4: Verify Custom Agent Available
 
-## 🚀 How to Use
+1. Check if organization has custom agents enabled:
+   - Organization Settings → Copilot → Policies
+   - Look for "Custom Agents" or "Coding Agent" settings
 
-### For VS Code (Local Development)
+2. If not available, contact your GitHub organization administrator
 
-1. **Ensure MCP servers are configured** in VS Code:
+### Step 5: Test the Agent
 
-   - File: `%APPDATA%\Code\User\globalStorage\github.copilot-chat\mcp.json`
-   - Already configured with your credentials
+#### Option A: Via GitHub.com Issue (Recommended)
 
-2. **Restart VS Code**
+1. Create a test issue in the repository:
+   ```
+   Title: Test Agent486 with ADO
+   Body: Parse this BRD and create work items in Azure DevOps
+   ```
 
-3. **Open GitHub Copilot Chat** (Ctrl+Alt+I)
+2. Assign the issue to **@agent486**
 
-4. **Select @agent486** from the agent dropdown
+3. Wait for Copilot to respond (look for 👀 reaction, then PR creation)
 
-5. **Test with a BRD prompt**
+4. Click the PR and view the Copilot session logs
 
-### For GitHub.com (Organization/Enterprise)
+5. Check "Start MCP Servers" step to verify:
+   - `ado-mcp-server` started successfully
+   - `jira-mcp-server` started successfully
+   - Tools are listed
 
-1. **Navigate to**: https://github.com/copilot/agents
+#### Option B: Via GitHub Copilot Chat (if available)
 
-2. **Select your repository**: `PsHuliyappanavar/MCP`
+1. Open GitHub Copilot Chat on GitHub.com
 
-3. **You should see agent486** in the agent list
+2. Type:
+   ```
+   @agent486 authenticate with Azure DevOps
+   ```
 
-4. **Use in any repository** within your organization by selecting it from the Copilot dropdown
+3. The agent should:
+   - Invoke the `authenticate` tool from `ado-mcp-server`
+   - Start OAuth flow (may require additional configuration for OAuth callbacks in GitHub's environment)
 
-## ⚙️ Configuration Notes
+## Troubleshooting
 
-### MCP Server Paths
+### Issue: "Agent not found" or "@agent486 not recognized"
 
-The agent profile uses **absolute paths** to the MCP server scripts:
+**Cause**: Organization doesn't have custom agents feature enabled
 
-- `C:\\Users\\sandeepk\\Favorites\\Building\\deployMCP\\ado_mcp_stdio.py`
-- `C:\\Users\\sandeepk\\Favorites\\Building\\deployMCP\\jira_mcp_stdio.py`
+**Solution**:
+1. Contact GitHub organization administrator
+2. Request enabling "GitHub Copilot Custom Agents" feature
+3. May require GitHub Copilot Enterprise license
 
-**Important**:
+### Issue: MCP servers fail to start
 
-- For local VS Code usage, these paths work as-is
-- For GitHub.com/Codespaces, you may need to deploy the MCP servers as accessible services
-- Consider using relative paths or environment variables for more flexibility
+**Symptoms**: In Copilot session logs, "Start MCP Servers" step shows errors
 
-### Secrets Management
+**Possible causes**:
+1. **Missing dependencies**: Python packages not installed
+   - Fix: Verify `.github/workflows/copilot-setup-steps.yml` runs successfully
+   
+2. **Secret mapping issue**: Environment variables not passed correctly
+   - Fix: Double-check secret names have `COPILOT_MCP_` prefix
+   - Fix: Verify secrets exist in the `copilot` environment (not repository secrets)
 
-The organization-level agent references secrets using GitHub Actions syntax:
+3. **Python version issue**: MCP servers require Python 3.11+
+   - Fix: Update `copilot-setup-steps.yml` to use `python-version: '3.11'`
 
-```yaml
-ADO_CLIENT_ID: ${{ secrets.ADO_CLIENT_ID }}
-```
+### Issue: OAuth flow doesn't work
 
-**To configure secrets**:
+**Symptom**: `authenticate` tool is invoked but OAuth fails
 
-1. Go to your organization settings on GitHub
-2. Navigate to **Settings → Secrets and variables → Copilot**
-3. Add the 5 required secrets (see DEPLOYMENT.md)
+**Cause**: GitHub's environment doesn't support localhost callbacks
 
-## 🔍 Verification Steps
+**Solution**: This is a known limitation. OAuth-based MCP servers work better in local environments. For GitHub Copilot coding agent:
+- Consider using service principal authentication instead of OAuth
+- Or pre-authenticate and store long-lived tokens in secrets
 
-### 1. Check Agent Availability
+### Issue: Tools are recognized but not executing correctly
 
-- Open any repository in your organization
-- Open Copilot Chat
-- Look for `@agent486` in the dropdown
+**Debug steps**:
+1. Check Copilot session logs for tool invocation details
+2. Look for error messages in MCP server output
+3. Verify the `tools: ["*"]` property in agent profile
+4. Test MCP servers locally with `direct_mcp_cli.py`
 
-### 2. Test MCP Server Connection
+## Validation Checklist
+
+- [ ] Repository pushed to GitHub with all required files
+- [ ] `copilot` environment created in repository settings
+- [ ] All 5 secrets added with `COPILOT_MCP_` prefix
+- [ ] `.github/workflows/copilot-setup-steps.yml` exists
+- [ ] Organization has custom agents feature enabled
+- [ ] Test issue created and assigned to @agent486
+- [ ] Copilot responds with 👀 reaction
+- [ ] PR created by Copilot
+- [ ] MCP servers listed in Copilot session logs
+- [ ] Tools show as available in logs
+
+## Current Status
+
+### ✅ Completed
+- Agent profile created (`agents/agent486.md`)
+- MCP servers implemented (ADO + Jira)
+- Setup workflow configured
+- Repository pushed to GitHub
+- VS Code chat mode removed (doesn't support MCP)
+
+### ⏳ Pending
+- Create `copilot` environment in repository
+- Add secrets to Copilot environment
+- Test agent with issue assignment
+- Verify MCP server startup in logs
+- Test complete BRD→work item workflow
+
+### ❓ Requires Verification
+- Organization has custom agents feature enabled
+- OAuth callbacks work in GitHub's environment (may need alternative auth)
+
+## Alternative: Local Testing
+
+If organization-level agents aren't available, test locally with:
 
 ```bash
-# Test ADO MCP server
-python ado_mcp_stdio.py
-# Should start and wait for input (Ctrl+C to exit)
-
-# Test Jira MCP server
-python jira_mcp_stdio.py
-# Should start and wait for input (Ctrl+C to exit)
+python direct_mcp_cli.py
 ```
 
-### 3. Test Agent with Simple BRD
+This script:
+1. Starts the ADO MCP server
+2. Initializes the connection
+3. Lists available tools
+4. Tests authentication (opens browser for OAuth)
+5. Fetches organizations
+6. Displays results
 
-```
-@agent486 Transform this BRD into Azure DevOps work items:
+This validates that the MCP servers work correctly, even if GitHub's custom agent feature isn't accessible yet.
 
-# Simple Test
+## Next Steps
 
-## Functional Requirements
-1. User login with password
-2. Dashboard display
+1. **Create Copilot environment and add secrets** (Step 2 above)
+2. **Verify organization has custom agents enabled**
+3. **Test with issue assignment** (Step 5, Option A)
+4. **Review Copilot session logs** to verify MCP servers started
+5. **Test complete BRD parsing workflow** once authentication works
 
-## Non-Functional Requirements
-- Response time < 2 seconds
-```
+## Documentation References
 
-## 📖 Documentation References
-
-- **GitHub Docs**: [Creating custom agents](https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/use-copilot-agents/coding-agent/create-custom-agents)
-- **Custom Agents Configuration**: [Reference](https://docs.github.com/en/enterprise-cloud@latest/copilot/reference/custom-agents-configuration)
-- **Your README.md**: Complete setup and usage guide
-- **Your DEPLOYMENT.md**: Detailed deployment instructions with OAuth setup
-
-## 🐛 Troubleshooting
-
-### Agent Not Appearing
-
-**Issue**: `@agent486` doesn't show in dropdown
-
-**Solutions**:
-
-1. Verify file is in `agents/` (not `.github/agents/`)
-2. Check YAML frontmatter is valid (use a YAML validator)
-3. Ensure repository is accessible to your organization
-4. Restart VS Code
-5. Clear VS Code cache: Developer Tools → Application → Storage → Clear Site Data
-
-### MCP Server Not Loading
-
-**Issue**: Tools not working when agent is invoked
-
-**Solutions**:
-
-1. Verify Python is in PATH: `python --version`
-2. Check MCP server paths are correct (absolute paths)
-3. Ensure secrets are configured in organization settings
-4. Test MCP servers manually (see Verification Steps above)
-5. Check VS Code Output panel: GitHub Copilot Chat for errors
-
-### Authentication Failures
-
-**Issue**: OAuth fails when agent tries to authenticate
-
-**Solutions**:
-
-1. Verify redirect URIs in Azure AD / Atlassian console:
-   - ADO: `http://localhost:9001/oauth/callback`
-   - Jira: `http://localhost:9000/oauth/callback`
-2. Check secrets are correct (no extra spaces/characters)
-3. Ensure OAuth apps have required permissions:
-   - ADO: `user_impersonation`
-   - Jira: `read:jira-work`, `write:jira-work`, etc.
-4. Try revoking and re-authorizing the OAuth apps
-
-## 🎯 Next Steps
-
-1. ✅ **Organization-level agent is configured and pushed**
-2. ⏭️ **Configure secrets in your organization settings** (if not already done)
-3. ⏭️ **Test the agent in VS Code**
-4. ⏭️ **Verify agent appears on GitHub.com** at https://github.com/copilot/agents
-5. ⏭️ **Train team members** on using the agent
-6. ⏭️ **Gather feedback** and iterate
-
----
-
-**Your Agent486 is now properly configured as an organization-level custom agent! 🎉**
+- [GitHub Custom Agents Configuration](https://docs.github.com/en/enterprise-cloud@latest/copilot/reference/custom-agents-configuration)
+- [Extending Coding Agent with MCP](https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/use-copilot-agents/coding-agent/extend-coding-agent-with-mcp)
+- [Model Context Protocol Specification](https://modelcontextprotocol.io/)
+- [Creating Custom Agents](https://docs.github.com/en/enterprise-cloud@latest/copilot/how-tos/use-copilot-agents/coding-agent/create-custom-agents)
