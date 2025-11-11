@@ -1,19 +1,22 @@
 # Agent486 Setup Guide - Organization/Enterprise Level
 
 ## Overview
+
 Agent486 is a GitHub Copilot custom agent that automates BRD (Business Requirements Document) parsing and hierarchical work item creation in Azure DevOps and Jira using MCP (Model Context Protocol) servers.
 
 ## Architecture
 
 ### Components
+
 1. **Custom Agent**: `agents/agent486.md` - Organization-level agent profile
-2. **MCP Servers**: 
+2. **MCP Servers**:
    - `ado_mcp_stdio.py` - Azure DevOps MCP server
    - `jira_mcp_stdio.py` - Jira MCP server
 3. **Setup Workflow**: `.github/workflows/copilot-setup-steps.yml` - Installs dependencies
 4. **Secrets**: OAuth credentials stored in GitHub repository's Copilot environment
 
 ### Why VS Code Chat Modes Don't Work
+
 - ❌ **VS Code `.chatmode.md` files**: Context/personality only, NO MCP support
 - ✅ **Organization agents (`agents/*.md`)**: Full MCP support with embedded server configs
 - ❌ **Repository agents (`.github/agents/*.md`)**: NO MCP server configuration support
@@ -21,16 +24,19 @@ Agent486 is a GitHub Copilot custom agent that automates BRD (Business Requireme
 ## Prerequisites
 
 ### 1. GitHub Enterprise Cloud
+
 - Organization must have **GitHub Copilot Enterprise**
 - Custom agents feature must be enabled (contact GitHub admin if not available)
 
 ### 2. Repository Access
+
 - Repository must be in the organization
 - You must be a **repository administrator** to configure secrets
 
 ### 3. OAuth Applications
 
 #### Azure DevOps (ADO)
+
 - Azure AD application with:
   - Client ID: `25a1e0db-fb5f-4baf-b542-af6de0ebe24f`
   - Client Secret: `Xjz8Q~A3VbHe-yugbKhi-LVpRHwUzQ8owEWVBbt0`
@@ -39,6 +45,7 @@ Agent486 is a GitHub Copilot custom agent that automates BRD (Business Requireme
   - Scopes: `https://app.vssps.visualstudio.com/user_impersonation offline_access`
 
 #### Jira/Atlassian
+
 - Atlassian OAuth 2.0 app with:
   - Client ID: `rTGWKW1Ogs2BFloYan82z9Pqg8IUIzQK`
   - Client Secret: `ATOAO6nNJmT8-b2nQbh3eq-MiHdVlY7PDZipki9vHgKfTINYwVhoEz64YNIbmUAQ9lR_503D4DB8`
@@ -52,11 +59,13 @@ Agent486 is a GitHub Copilot custom agent that automates BRD (Business Requireme
 The repository is already pushed to: `https://github.com/PsHuliyappanavar/MCP`
 
 Verify files exist:
+
 ```bash
 git ls-files
 ```
 
 Expected files:
+
 - `agents/agent486.md` ✅
 - `.github/workflows/copilot-setup-steps.yml` ✅
 - `ado_mcp_stdio.py` ✅
@@ -65,6 +74,7 @@ Expected files:
 ### Step 2: Create Copilot Environment and Secrets
 
 1. Go to repository on GitHub.com:
+
    ```
    https://github.com/PsHuliyappanavar/MCP
    ```
@@ -81,12 +91,12 @@ Expected files:
 
 7. Add the following secrets (click "Add environment secret" for each):
 
-   | Secret Name | Value |
-   |------------|-------|
-   | `COPILOT_MCP_ADO_CLIENT_ID` | `25a1e0db-fb5f-4baf-b542-af6de0ebe24f` |
-   | `COPILOT_MCP_ADO_CLIENT_SECRET` | `Xjz8Q~A3VbHe-yugbKhi-LVpRHwUzQ8owEWVBbt0` |
-   | `COPILOT_MCP_ADO_TENANT_ID` | `0c88fa98-b222-4fd8-9414-559fa424ce64` |
-   | `COPILOT_MCP_ATLASSIAN_CLIENT_ID` | `rTGWKW1Ogs2BFloYan82z9Pqg8IUIzQK` |
+   | Secret Name                           | Value                                                                          |
+   | ------------------------------------- | ------------------------------------------------------------------------------ |
+   | `COPILOT_MCP_ADO_CLIENT_ID`           | `25a1e0db-fb5f-4baf-b542-af6de0ebe24f`                                         |
+   | `COPILOT_MCP_ADO_CLIENT_SECRET`       | `Xjz8Q~A3VbHe-yugbKhi-LVpRHwUzQ8owEWVBbt0`                                     |
+   | `COPILOT_MCP_ADO_TENANT_ID`           | `0c88fa98-b222-4fd8-9414-559fa424ce64`                                         |
+   | `COPILOT_MCP_ATLASSIAN_CLIENT_ID`     | `rTGWKW1Ogs2BFloYan82z9Pqg8IUIzQK`                                             |
    | `COPILOT_MCP_ATLASSIAN_CLIENT_SECRET` | `ATOAO6nNJmT8-b2nQbh3eq-MiHdVlY7PDZipki9vHgKfTINYwVhoEz64YNIbmUAQ9lR_503D4DB8` |
 
    **Important**: All secret names MUST start with `COPILOT_MCP_` prefix!
@@ -104,18 +114,35 @@ mcp-servers:
       ADO_TENANT_ID: ${{ secrets.ADO_TENANT_ID }}
 ```
 
-**BUT** the actual secret names in the Copilot environment have the `COPILOT_MCP_` prefix.
+### Step 3: Verify Agent Configuration
 
-GitHub automatically maps:
-- `${{ secrets.ADO_CLIENT_ID }}` → `COPILOT_MCP_ADO_CLIENT_ID`
-- `${{ secrets.ADO_CLIENT_SECRET }}` → `COPILOT_MCP_ADO_CLIENT_SECRET`
-- etc.
+The `agents/agent486.md` file directly references Copilot environment secret names:
 
-**No changes needed** - the mapping happens automatically!
+```yaml
+mcp-servers:
+  ado-mcp-server:
+    type: local
+    command: python3
+    args:
+      - "ado_mcp_stdio.py"
+    tools: ["*"]
+    env:
+      ADO_CLIENT_ID: COPILOT_MCP_ADO_CLIENT_ID
+      ADO_CLIENT_SECRET: COPILOT_MCP_ADO_CLIENT_SECRET
+      ADO_TENANT_ID: COPILOT_MCP_ADO_TENANT_ID
+```
+
+**How it works**: 
+- The values in the `env` section (e.g., `COPILOT_MCP_ADO_CLIENT_ID`) are the names of secrets stored in the Copilot environment
+- GitHub reads these secrets and passes them as environment variables to the MCP server
+- The environment variable names (left side: `ADO_CLIENT_ID`, `ADO_CLIENT_SECRET`, etc.) match what the MCP server code expects via `os.getenv()`
+
+**No additional configuration needed** - secrets are automatically injected when the MCP server starts!
 
 ### Step 4: Verify Custom Agent Available
 
 1. Check if organization has custom agents enabled:
+
    - Organization Settings → Copilot → Policies
    - Look for "Custom Agents" or "Coding Agent" settings
 
@@ -126,6 +153,7 @@ GitHub automatically maps:
 #### Option A: Via GitHub.com Issue (Recommended)
 
 1. Create a test issue in the repository:
+
    ```
    Title: Test Agent486 with ADO
    Body: Parse this BRD and create work items in Azure DevOps
@@ -147,6 +175,7 @@ GitHub automatically maps:
 1. Open GitHub Copilot Chat on GitHub.com
 
 2. Type:
+
    ```
    @agent486 authenticate with Azure DevOps
    ```
@@ -162,6 +191,7 @@ GitHub automatically maps:
 **Cause**: Organization doesn't have custom agents feature enabled
 
 **Solution**:
+
 1. Contact GitHub organization administrator
 2. Request enabling "GitHub Copilot Custom Agents" feature
 3. May require GitHub Copilot Enterprise license
@@ -171,10 +201,11 @@ GitHub automatically maps:
 **Symptoms**: In Copilot session logs, "Start MCP Servers" step shows errors
 
 **Possible causes**:
+
 1. **Missing dependencies**: Python packages not installed
    - Fix: Verify `.github/workflows/copilot-setup-steps.yml` runs successfully
-   
 2. **Secret mapping issue**: Environment variables not passed correctly
+
    - Fix: Double-check secret names have `COPILOT_MCP_` prefix
    - Fix: Verify secrets exist in the `copilot` environment (not repository secrets)
 
@@ -188,12 +219,14 @@ GitHub automatically maps:
 **Cause**: GitHub's environment doesn't support localhost callbacks
 
 **Solution**: This is a known limitation. OAuth-based MCP servers work better in local environments. For GitHub Copilot coding agent:
+
 - Consider using service principal authentication instead of OAuth
 - Or pre-authenticate and store long-lived tokens in secrets
 
 ### Issue: Tools are recognized but not executing correctly
 
 **Debug steps**:
+
 1. Check Copilot session logs for tool invocation details
 2. Look for error messages in MCP server output
 3. Verify the `tools: ["*"]` property in agent profile
@@ -215,6 +248,7 @@ GitHub automatically maps:
 ## Current Status
 
 ### ✅ Completed
+
 - Agent profile created (`agents/agent486.md`)
 - MCP servers implemented (ADO + Jira)
 - Setup workflow configured
@@ -222,6 +256,7 @@ GitHub automatically maps:
 - VS Code chat mode removed (doesn't support MCP)
 
 ### ⏳ Pending
+
 - Create `copilot` environment in repository
 - Add secrets to Copilot environment
 - Test agent with issue assignment
@@ -229,6 +264,7 @@ GitHub automatically maps:
 - Test complete BRD→work item workflow
 
 ### ❓ Requires Verification
+
 - Organization has custom agents feature enabled
 - OAuth callbacks work in GitHub's environment (may need alternative auth)
 
@@ -241,6 +277,7 @@ python direct_mcp_cli.py
 ```
 
 This script:
+
 1. Starts the ADO MCP server
 2. Initializes the connection
 3. Lists available tools

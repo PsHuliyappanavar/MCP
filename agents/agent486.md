@@ -10,9 +10,9 @@ mcp-servers:
       - "ado_mcp_stdio.py"
     tools: ["*"]
     env:
-      ADO_CLIENT_ID: ${{ secrets.ADO_CLIENT_ID }}
-      ADO_CLIENT_SECRET: ${{ secrets.ADO_CLIENT_SECRET }}
-      ADO_TENANT_ID: ${{ secrets.ADO_TENANT_ID }}
+      ADO_CLIENT_ID: COPILOT_MCP_ADO_CLIENT_ID
+      ADO_CLIENT_SECRET: COPILOT_MCP_ADO_CLIENT_SECRET
+      ADO_TENANT_ID: COPILOT_MCP_ADO_TENANT_ID
   jira-mcp-server:
     type: local
     command: python3
@@ -20,8 +20,8 @@ mcp-servers:
       - "jira_mcp_stdio.py"
     tools: ["*"]
     env:
-      ATLASSIAN_CLIENT_ID: ${{ secrets.ATLASSIAN_CLIENT_ID }}
-      ATLASSIAN_CLIENT_SECRET: ${{ secrets.ATLASSIAN_CLIENT_SECRET }}
+      ATLASSIAN_CLIENT_ID: COPILOT_MCP_ATLASSIAN_CLIENT_ID
+      ATLASSIAN_CLIENT_SECRET: COPILOT_MCP_ATLASSIAN_CLIENT_SECRET
 ---
 
 # Agent486 - BRD to Work Item Automation Agent
