@@ -43,6 +43,7 @@ git push -u origin main
 4. Add the following secrets:
 
 **Azure DevOps Secrets:**
+
 - **Name**: `ADO_CLIENT_ID`
   - **Value**: Your Azure AD application client ID
 - **Name**: `ADO_CLIENT_SECRET`
@@ -51,6 +52,7 @@ git push -u origin main
   - **Value**: Your Azure AD tenant ID
 
 **Jira Secrets:**
+
 - **Name**: `ATLASSIAN_CLIENT_ID`
   - **Value**: Your Atlassian OAuth client ID
 - **Name**: `ATLASSIAN_CLIENT_SECRET`
@@ -116,18 +118,23 @@ git push -u origin main
 For local VS Code usage with GitHub Copilot, configure MCP servers:
 
 **Windows:**
+
 1. Create/edit: `%APPDATA%\Code\User\globalStorage\github.copilot-chat\mcp.json`
 
 **Mac/Linux:**
+
 1. Create/edit: `~/.config/Code/User/globalStorage/github.copilot-chat/mcp.json`
 
 **Content:**
+
 ```json
 {
   "mcpServers": {
     "ado-mcp-server": {
       "command": "python",
-      "args": ["C:\\Users\\sandeepk\\Favorites\\Building\\deployMCP\\ado_mcp_stdio.py"],
+      "args": [
+        "C:\\Users\\sandeepk\\Favorites\\Building\\deployMCP\\ado_mcp_stdio.py"
+      ],
       "env": {
         "ADO_CLIENT_ID": "your-actual-client-id",
         "ADO_CLIENT_SECRET": "your-actual-client-secret",
@@ -136,7 +143,9 @@ For local VS Code usage with GitHub Copilot, configure MCP servers:
     },
     "jira-mcp-server": {
       "command": "python",
-      "args": ["C:\\Users\\sandeepk\\Favorites\\Building\\deployMCP\\jira_mcp_stdio.py"],
+      "args": [
+        "C:\\Users\\sandeepk\\Favorites\\Building\\deployMCP\\jira_mcp_stdio.py"
+      ],
       "env": {
         "ATLASSIAN_CLIENT_ID": "your-actual-client-id",
         "ATLASSIAN_CLIENT_SECRET": "your-actual-client-secret"
@@ -182,6 +191,7 @@ Try this test prompt:
 ```
 
 The agent should:
+
 1. Authenticate with ADO (opens browser)
 2. Fetch organizations
 3. Parse the BRD
@@ -212,12 +222,14 @@ The agent should:
 ### OAuth Authentication Fails
 
 **Azure DevOps:**
+
 1. Verify redirect URI exactly matches: `http://localhost:9001/oauth/callback`
 2. Check admin consent was granted
 3. Ensure user_impersonation scope is added
 4. Verify tenant ID is correct
 
 **Jira:**
+
 1. Verify redirect URI exactly matches: `http://localhost:9000/oauth/callback`
 2. Check app is distributed (unlisted/public)
 3. Ensure all required scopes are added
@@ -294,6 +306,7 @@ Once deployed successfully:
 ## Support
 
 For issues:
+
 1. Check this guide
 2. Review [README.md](README.md)
 3. Check [Instructions.md](Instructions.md) for detailed operational logic
