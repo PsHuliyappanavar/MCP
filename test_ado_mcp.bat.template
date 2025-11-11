@@ -1,0 +1,17 @@
+@echo off
+REM Template for testing ADO MCP Server
+REM Copy this file to test_ado_mcp.bat and fill in your credentials
+
+echo Testing ADO MCP Server...
+echo Setting environment variables...
+
+REM TODO: Replace these with your actual Azure AD OAuth credentials
+set ADO_CLIENT_ID=your-client-id-here
+set ADO_CLIENT_SECRET=your-client-secret-here
+set ADO_TENANT_ID=your-tenant-id-here
+
+echo Starting ADO MCP Server...
+echo Press Ctrl+C to stop
+echo.
+
+python "%~dp0ado_mcp_stdio.py"

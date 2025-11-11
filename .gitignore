@@ -26,6 +26,11 @@ Thumbs.db
 # MCP configuration with secrets (DO NOT PUSH)
 mcp.json
 
+# Test scripts with credentials (DO NOT PUSH)
+test_ado_mcp.bat
+test_jira_mcp.bat
+test_*.bat
+
 # OAuth tokens and session data
 .oauth_tokens/
 *.token

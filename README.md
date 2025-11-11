@@ -15,6 +15,7 @@ This repository contains **Agent486**, a custom GitHub Copilot agent that automa
 This repository provides **TWO** agent configurations:
 
 1. **Repository-Level Agent** (`.github/agents/agent486.md`)
+
    - For individual repository use
    - Requires MCP servers configured separately in VS Code settings
    - Use for testing or single-repository deployments
